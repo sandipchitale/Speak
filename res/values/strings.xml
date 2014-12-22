@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Speak</string>
+    <string name="speak_service_name">Speak</string>
+    <string name="action_speak">Speak</string>
+    <string name="action_stop">Stop</string>
+    <string name="action_settings">Settings</string>
+
+</resources>
