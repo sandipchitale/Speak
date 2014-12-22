@@ -9,7 +9,7 @@ import android.view.MenuItem;
 import android.widget.EditText;
 
 public class SpeakServiceLaunchActivity extends Activity {
-	private boolean finishAfterIntent = true;
+	private boolean finishAfterIntent;
 	private EditText speechText;
 
 	@Override
@@ -20,9 +20,9 @@ public class SpeakServiceLaunchActivity extends Activity {
 		Intent intent = getIntent();
         String action = intent.getAction();
 		Log.d(Thread.currentThread().getName(), "Action: " + action);
+		finishAfterIntent = true;
         if (Intent.ACTION_MAIN.equals(action)) {
         	finishAfterIntent = false;
-
         } else if (Intent.ACTION_SEND.equals(action)) {
         	String type = intent.getType();
             if ("text/plain".equals(type)) {
