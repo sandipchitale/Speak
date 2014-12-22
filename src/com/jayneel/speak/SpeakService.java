@@ -2,7 +2,6 @@ package com.jayneel.speak;
 
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
-
 import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -14,6 +13,10 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 public class SpeakService extends IntentService {
+	static final String STOP = "STOP";
+	static final String SPEAK = "SPEAK";
+	static final String TEXT = "text";
+
 	private TextToSpeech textToSpeech;
 	private CountDownLatch countDownLatch;
 	static boolean stopIt = false;
@@ -23,7 +26,7 @@ public class SpeakService extends IntentService {
 	 *
 	 */
 	public SpeakService() {
-		super("Speak");
+		super(SPEAK);
 		countDownLatch = new CountDownLatch(1);
 	}
 
@@ -47,8 +50,8 @@ public class SpeakService extends IntentService {
 	protected void onHandleIntent(Intent intent) {
 		String action = intent.getAction();
 		Log.d(Thread.currentThread().getName(), "Action: " + action);
-		if ("SPEAK".equals(action)) {
-			String text = intent.getExtras().getString("text");
+		if (SPEAK.equals(action)) {
+			String text = intent.getExtras().getString(TEXT);
 			if (text != null) {
 				try {
 					countDownLatch.await();
@@ -65,31 +68,31 @@ public class SpeakService extends IntentService {
 		textToSpeech.speak(text, TextToSpeech.QUEUE_ADD, new HashMap<String, String>());
 		NotificationManager mNotificationManager =
 				(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        
+
 		Intent stopIntent = new Intent(this, SpeakServiceLaunchActivity.class);
-		stopIntent.setAction("STOP");
-		
+		stopIntent.setAction(STOP);
+
 		PendingIntent stopPendingIntent =
 				PendingIntent.getActivity(
 						this,
 						10001,
 						stopIntent,
 						PendingIntent.FLAG_CANCEL_CURRENT);
-		        				
+
 		NotificationCompat.Builder notficationBuilder = new NotificationCompat.Builder(this)
 				.setSmallIcon(R.drawable.ic_launcher)
-				.setContentTitle("Speak")
-				.setContentText("Touch to stop.")
+				.setContentTitle(getString(R.string.notification_title))
+				.setContentText(getString(R.string.notification_text))
 				.setPriority(Notification.PRIORITY_MAX);
-		
+
 		notficationBuilder.setContentIntent(stopPendingIntent);
-		notficationBuilder.addAction(R.drawable.ic_av_stop, "STOP", stopPendingIntent);
-		
+		notficationBuilder.addAction(R.drawable.ic_av_stop, STOP, stopPendingIntent);
+
 		mNotificationManager.notify(1001, notficationBuilder.build());
 		stopIt = false;
 		waitToFinishSpeaking();
 	}
-	
+
 	private void waitToFinishSpeaking() {
 		try {
 			while (textToSpeech.isSpeaking()) {
