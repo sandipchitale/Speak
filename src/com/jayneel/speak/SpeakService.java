@@ -1,7 +1,6 @@
 package com.jayneel.speak;
 
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 
 import android.app.IntentService;
@@ -37,7 +36,6 @@ public class SpeakService extends IntentService {
 					@Override
 					public void onInit(int status) {
 						if (status != TextToSpeech.ERROR) {
-							textToSpeech.setLanguage(Locale.US);
 							countDownLatch.countDown();
 							Log.d(Thread.currentThread().getName(), "TTS Initialized.");
 						}

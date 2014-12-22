@@ -64,9 +64,15 @@ public class SpeakServiceLaunchActivity extends Activity {
 		int id = item.getItemId();
 		if (id == R.id.action_speak) {
 			speak(speechText.getText().toString());
+			return true;
 		} else if (id == R.id.action_stop) {
 			stop();
+			return true;
 		} else if (id == R.id.action_settings) {
+			Intent intent = new Intent();
+			intent.setAction("com.android.settings.TTS_SETTINGS");
+			intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			this.startActivity(intent);
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
