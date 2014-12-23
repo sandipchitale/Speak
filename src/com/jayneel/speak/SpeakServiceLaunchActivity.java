@@ -21,17 +21,16 @@ public class SpeakServiceLaunchActivity extends Activity {
 		setContentView(R.layout.activity_speak_service_launch);
 		speechText = (EditText) findViewById(R.id.speechText);
 
-        // Restore preferences
-		SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
-		String text = settings.getString(SpeakService.TEXT, "");
-		speechText.setText(text);
-
 		Intent intent = getIntent();
         String action = intent.getAction();
 		Log.d(Thread.currentThread().getName(), "Action: " + action);
 		finishAfterIntent = true;
         if (Intent.ACTION_MAIN.equals(action)) {
         	finishAfterIntent = false;
+            // Restore preferences
+            SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+            String text = settings.getString(SpeakService.TEXT, "");
+            speechText.setText(text);
         } else if (Intent.ACTION_SEND.equals(action)) {
         	String type = intent.getType();
             if ("text/plain".equals(type)) {
@@ -51,14 +50,16 @@ public class SpeakServiceLaunchActivity extends Activity {
 	protected void onPause() {
 		super.onPause();
 
-		// We need an Editor object to make preference changes.
-		// All objects are from android.context.Context
-		SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
-		SharedPreferences.Editor editor = settings.edit();
-		editor.putString(SpeakService.TEXT, speechText.getText().toString());
+		if (!finishAfterIntent) {
+			// We need an Editor object to make preference changes.
+			// All objects are from android.context.Context
+			SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+			SharedPreferences.Editor editor = settings.edit();
+			editor.putString(SpeakService.TEXT, speechText.getText().toString());
 
-		// Commit the edits!
-		editor.commit();
+			// Commit the edits!
+			editor.commit();
+		}
 	}
 
 	private void speak(String text) {
