@@ -1,9 +1,16 @@
 package com.jayneel.speak;
 
+import java.util.LinkedHashMap;
+import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech.Engine;
+import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -63,13 +70,103 @@ public class SpeakServiceLaunchActivity extends Activity {
 	}
 
 	private void speak(String text) {
-		Intent speakIntent = new Intent(this, SpeakService.class);
-        speakIntent.setAction(SpeakService.SPEAK);
-        speakIntent.putExtra(SpeakService.TEXT, text);
-    	this.startService(speakIntent);
+		speak(text, false);
+	}
+
+	private LinkedHashMap<Integer, String> lhs;
+
+	private static Pattern dq = Pattern.compile("[.?]");
+
+	private void speak(String text, boolean highlightSpokenSentence) {
+		if (highlightSpokenSentence) {
+			if (text.trim().length() == 0) {
+				return;
+			}
+
+			int from = 0;
+			int indexOfDot ;
+
+			lhs = new LinkedHashMap<Integer, String>();
+
+			SpeakService.setUtteranceProgressListener(new UtteranceProgressListener() {
+				@Override
+				public void onStart(String utteranceId) {
+					Integer from = Integer.valueOf(utteranceId);
+					String sentence = lhs.remove(from);
+					int to = from + sentence.length();
+					setSelection(from, to);
+				}
+
+				@Override
+				public void onDone(String utteranceId) {
+					if (lhs.isEmpty()) {
+						clear();
+					} else {
+						speakNext(lhs);
+					}
+				}
+
+				@Override
+				public void onError(String utteranceId) {
+					clear();
+				}
+
+				@Override
+				public void onError(String utteranceId, int statusCode) {
+					clear();
+				}
+
+			});
+			Matcher matcher = dq.matcher(text);
+			while (matcher.find(from)) {
+				indexOfDot = matcher.start();
+				String sentence = text.substring(from, indexOfDot+1);
+				lhs.put(from, sentence);
+				from = indexOfDot + 1;
+			}
+
+			if (from < text.length()) {
+				lhs.put(from, text.substring(from));
+			}
+
+			speakNext(lhs);
+		} else {
+			Intent speakIntent = new Intent(this, SpeakService.class);
+			speakIntent.setAction(SpeakService.SPEAK);
+			speakIntent.putExtra(SpeakService.TEXT, text);
+			this.startService(speakIntent);
+		}
+	}
+
+	private void speakNext(LinkedHashMap<Integer, String> lhs) {
+		Entry<Integer, String> entry = lhs.entrySet().iterator().next();
+		if (entry != null) {
+			Intent speakIntent = new Intent(this, SpeakService.class);
+			speakIntent.setAction(SpeakService.SPEAK);
+			speakIntent.putExtra(SpeakService.TEXT, entry.getValue());
+			speakIntent.putExtra(Engine.KEY_PARAM_UTTERANCE_ID, String.valueOf(entry.getKey()));
+			this.startService(speakIntent);
+		}
+	}
+
+	private void clear() {
+		SpeakService.setUtteranceProgressListener(null);
+		setSelection(0, 0);
+	}
+
+	private void setSelection(final int start, final int stop) {
+		speechText.post(new Runnable() {
+
+			@Override
+			public void run() {
+				speechText.setSelection(start, stop);
+			}
+
+		});
 	}
 
 	private void stopSpeaking() {
+		clear();
 		SpeakService.stopIt = true;
 	}
 
@@ -87,7 +184,7 @@ public class SpeakServiceLaunchActivity extends Activity {
 		// as you specify a parent activity in AndroidManifest.xml.
 		int id = item.getItemId();
 		if (id == R.id.action_speak) {
-			speak(speechText.getText().toString());
+			speak(speechText.getText().toString(), true);
 			return true;
 		} else if (id == R.id.action_stop) {
 			stopSpeaking();

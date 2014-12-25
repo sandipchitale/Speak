@@ -2,6 +2,7 @@ package com.jayneel.speak;
 
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
+
 import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -9,6 +10,8 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
+import android.speech.tts.TextToSpeech.Engine;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
@@ -20,6 +23,12 @@ public class SpeakService extends IntentService {
 	private TextToSpeech textToSpeech;
 	private CountDownLatch countDownLatch;
 	static boolean stopIt = false;
+
+	static UtteranceProgressListener utteranceProgressListener;
+
+	static void setUtteranceProgressListener(UtteranceProgressListener utteranceProgressListener) {
+		SpeakService.utteranceProgressListener = utteranceProgressListener;
+	}
 
 	/**
 	 * Creates an IntentService. Invoked by your subclass's constructor.
@@ -41,6 +50,37 @@ public class SpeakService extends IntentService {
 						if (status != TextToSpeech.ERROR) {
 							countDownLatch.countDown();
 							Log.d(Thread.currentThread().getName(), "TTS Initialized.");
+							textToSpeech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+
+								@Override
+								public void onStart(String utteranceId) {
+									if (utteranceProgressListener != null) {
+										utteranceProgressListener.onStart(utteranceId);
+									}
+								}
+
+								@SuppressWarnings("deprecation")
+								@Override
+								public void onError(String utteranceId) {
+									if (utteranceProgressListener != null) {
+										utteranceProgressListener.onError(utteranceId);
+									}
+								}
+
+								@Override
+								public void onError(String utteranceId, int errorCode) {
+									if (utteranceProgressListener != null) {
+										utteranceProgressListener.onError(utteranceId, errorCode);
+									}
+								}
+
+								@Override
+								public void onDone(String utteranceId) {
+									if (utteranceProgressListener != null) {
+										utteranceProgressListener.onDone(utteranceId);
+									}
+								}
+							});
 						}
 					}
 				});
@@ -52,11 +92,12 @@ public class SpeakService extends IntentService {
 		Log.d(Thread.currentThread().getName(), "Action: " + action);
 		if (SPEAK.equals(action)) {
 			String text = intent.getExtras().getString(TEXT);
+			String utteranceId = intent.getExtras().getString(Engine.KEY_PARAM_UTTERANCE_ID);
 			if (text != null) {
 				try {
 					countDownLatch.await();
 					Thread.sleep(100);
-					say(text);
+					say(text, utteranceId);
 				} catch (InterruptedException e) {
 				}
 			}
@@ -64,8 +105,12 @@ public class SpeakService extends IntentService {
 	}
 
 	@SuppressWarnings("deprecation")
-	private void say(String text) {
-		textToSpeech.speak(text, TextToSpeech.QUEUE_ADD, new HashMap<String, String>());
+	private void say(String text, String utteranceId) {
+		HashMap<String, String> params = new HashMap<String, String>();
+		if (utteranceId != null) {
+			params.put(Engine.KEY_PARAM_UTTERANCE_ID, utteranceId);
+		}
+		textToSpeech.speak(text, TextToSpeech.QUEUE_ADD, params);
 		NotificationManager mNotificationManager =
 				(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
