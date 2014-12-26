@@ -10,10 +10,9 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.speech.tts.TextToSpeech;
-import android.speech.tts.UtteranceProgressListener;
 import android.speech.tts.TextToSpeech.Engine;
+import android.speech.tts.UtteranceProgressListener;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
 
 public class SpeakService extends IntentService {
 	static final String STOP = "STOP";
@@ -49,7 +48,6 @@ public class SpeakService extends IntentService {
 					public void onInit(int status) {
 						if (status != TextToSpeech.ERROR) {
 							countDownLatch.countDown();
-							Log.d(Thread.currentThread().getName(), "TTS Initialized.");
 							textToSpeech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
 
 								@Override
@@ -89,7 +87,6 @@ public class SpeakService extends IntentService {
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		String action = intent.getAction();
-		Log.d(Thread.currentThread().getName(), "Action: " + action);
 		if (SPEAK.equals(action)) {
 			String text = intent.getExtras().getString(TEXT);
 			String utteranceId = intent.getExtras().getString(Engine.KEY_PARAM_UTTERANCE_ID);
@@ -110,7 +107,7 @@ public class SpeakService extends IntentService {
 		if (utteranceId != null) {
 			params.put(Engine.KEY_PARAM_UTTERANCE_ID, utteranceId);
 		}
-		textToSpeech.speak(text, TextToSpeech.QUEUE_ADD, params);
+		textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, params);
 		NotificationManager mNotificationManager =
 				(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 

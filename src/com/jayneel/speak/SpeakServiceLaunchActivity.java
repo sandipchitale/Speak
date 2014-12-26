@@ -11,7 +11,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech.Engine;
 import android.speech.tts.UtteranceProgressListener;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
@@ -30,7 +29,6 @@ public class SpeakServiceLaunchActivity extends Activity {
 
 		Intent intent = getIntent();
         String action = intent.getAction();
-		Log.d(Thread.currentThread().getName(), "Action: " + action);
 		finishAfterIntent = true;
         if (Intent.ACTION_MAIN.equals(action)) {
         	finishAfterIntent = false;
@@ -73,7 +71,7 @@ public class SpeakServiceLaunchActivity extends Activity {
 		speak(text, false);
 	}
 
-	private LinkedHashMap<Integer, String> lhs;
+	private static LinkedHashMap<Integer, String> lhs = new LinkedHashMap<Integer, String>();
 
 	private static Pattern dq = Pattern.compile("[.?]");
 
@@ -86,7 +84,7 @@ public class SpeakServiceLaunchActivity extends Activity {
 			int from = 0;
 			int indexOfDot ;
 
-			lhs = new LinkedHashMap<Integer, String>();
+			lhs.clear() ;
 
 			SpeakService.setUtteranceProgressListener(new UtteranceProgressListener() {
 				@Override
@@ -166,6 +164,7 @@ public class SpeakServiceLaunchActivity extends Activity {
 	}
 
 	private void stopSpeaking() {
+		lhs.clear();
 		clear();
 		SpeakService.stopIt = true;
 	}

@@ -8,5 +8,6 @@
     <string name="action_settings">Settings</string>
     <string name="notification_title">Speak</string>
     <string name="notification_text">Touch to stop.</string>
+    <string name="speechTextHint">Enter text to speak.</string>
 
 </resources>
